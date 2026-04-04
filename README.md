@@ -383,6 +383,8 @@ When the display is idle, it rotates airplane facts in random order without repe
 
 Author: A.J. Harnak
 
+If you like this project, consider buying me a coffee - https://buymeacoffee.com/ajharnak . Totally optional but greatly appreciated!
+
 This project is source-available for personal, hobbyist, educational, and other non-commercial use only.
 
 You may not use this project, or a modified version of it, for commercial purposes without explicit written permission from the author.
