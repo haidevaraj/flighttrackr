@@ -4,7 +4,7 @@ FlightTrackr watches nearby OpenSky traffic and logs a quick alert when a new fl
 
 ## What it does
 
-- Polls OpenSky for aircraft inside a small box around your chosen latitude and longitude
+- Polls OpenSky for aircraft inside a small circle around your chosen latitude and longitude
 - Alerts once per callsign, then suppresses repeats for your configured cooldown window
 - Pauses normal polling during your configured snooze hours
 - Uses FlightAware only for callsigns that look like known airlines, which avoids spending API calls on many local GA flights
