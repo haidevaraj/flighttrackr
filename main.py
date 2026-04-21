@@ -85,6 +85,7 @@ def main() -> None:
         flightaware_client=FlightAwareClient(
             api_key=flightaware_settings.api_key,
             usage_file=paths.flightaware_usage_file,
+            cache_file=paths.flightaware_cache_file,
             monthly_limit=flightaware_settings.monthly_call_limit,
             callsign_cache_ttl_minutes=flightaware_settings.callsign_cache_ttl_minutes,
             request_timeout_seconds=flightaware_settings.request_timeout_seconds,
@@ -93,12 +94,13 @@ def main() -> None:
         ),
         airportdb_client=AirportDbClient(
             api_token=airportdb_settings.api_token,
-            cache_file=paths.airportdb_cache_file,
+            cache_file=paths.airportdb_cache_file, 
             request_timeout_seconds=airportdb_settings.request_timeout_seconds,
         ),
         display=build_display(display_settings=display_settings, airplane_facts_path=paths.airplane_facts_path),
-        tts_player=TextToSpeech(volume=100, language="en-IN"),
+        tts_player=TextToSpeech(volume=100, language="en", tld="co.in"),
         enable_airline_announcement=True,
+        aeroapi_max_altitude_feet=flightaware_settings.max_altitude_feet,
     )
     tracker.run_forever()
 

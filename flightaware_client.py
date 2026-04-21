@@ -81,6 +81,7 @@ class FlightAwareClient:
         self,
         api_key: str | None,
         usage_file: Path,
+        cache_file: Path,
         monthly_limit: int,
         callsign_cache_ttl_minutes: int,
         request_timeout_seconds: int,
@@ -94,6 +95,7 @@ class FlightAwareClient:
             usage_file=usage_file,
             monthly_limit=monthly_limit,
         )
+        self.cache_file = cache_file
         self.session = session or requests.Session()
         if self.api_key:
             self.session.headers.update({"x-apikey": self.api_key})
@@ -101,7 +103,7 @@ class FlightAwareClient:
         self.request_timeout_seconds = request_timeout_seconds
         self.lookup_window_days = lookup_window_days
         self.max_pages = max_pages
-        self._cache: dict[str, FlightAwareCacheEntry] = {}
+        self._cache: dict[str, FlightAwareCacheEntry] = self._load_cache()
         self._limit_reached_logged_month: str | None = None
         self.status_callback = status_callback
 
@@ -132,7 +134,53 @@ class FlightAwareClient:
             details=details,
             expires_at=now + self.callsign_cache_ttl,
         )
+        self._save_cache()
         return details
+
+    def _load_cache(self) -> dict[str, FlightAwareCacheEntry]:
+        if not self.cache_file.exists():
+            return {}
+        try:
+            with open(self.cache_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                cache = {}
+                now = datetime.now(UTC)
+                for k, v in data.items():
+                    expires_at = datetime.fromisoformat(v["expires_at"])
+                    if now < expires_at:
+                        details = None
+                        if v["details"]:
+                            details = FlightDetails(**v["details"])
+                        cache[k] = FlightAwareCacheEntry(details=details, expires_at=expires_at)
+                return cache
+        except Exception as exc:
+            logger.warning("Could not load FlightAware cache: %s", exc)
+            return {}
+
+    def _save_cache(self) -> None:
+        try:
+            self.cache_file.parent.mkdir(parents=True, exist_ok=True)
+            serializable = {}
+            # Only save non-expired entries
+            now = datetime.now(UTC)
+            for k, v in self._cache.items():
+                if now < v.expires_at:
+                    details_dict = None
+                    if v.details:
+                        details_dict = {
+                            "origin": v.details.origin,
+                            "destination": v.details.destination,
+                            "aircraft_type": v.details.aircraft_type
+                        }
+                    serializable[k] = {
+                        "expires_at": v.expires_at.isoformat(),
+                        "details": details_dict
+                    }
+            
+            with open(self.cache_file, "w", encoding="utf-8") as f:
+                json.dump(serializable, f, indent=2)
+        except Exception as exc:
+            logger.warning("Could not save FlightAware cache: %s", exc)
 
     def _fetch_flight_details(self, callsign: str, now: datetime) -> FlightDetails | None:
         start = (now - timedelta(days=self.lookup_window_days)).strftime("%Y-%m-%d")

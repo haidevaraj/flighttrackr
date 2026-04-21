@@ -41,7 +41,7 @@ def test_flight_alert_with_tts():
     )
     
     # Initialize TTS (use Indian English female voice via gTTS)
-    tts = TextToSpeech(volume=100, language="en-IN")
+    tts = TextToSpeech(volume=100, language="en", tld="co.in")
     
     print("\n1. Playing alert sound...")
     audio_player.play(str(alert_sound))

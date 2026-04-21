@@ -62,6 +62,11 @@ class AudioPlayer:
 
         self._enabled = True
         self._start_background_silence()
+        # Preload sound assets to avoid blocking on first play
+        try:
+            self._preload_sounds()
+        except Exception:
+            logger.exception("Preloading sounds failed")
 
     def _start_background_silence(self) -> None:
         if not self.silence_path.exists():
@@ -79,9 +84,29 @@ class AudioPlayer:
             logger.warning("Could not start background silence track: %s", exc)
             self._notify_status("Audio Error", "Silence failed")
 
-    def play(self, sound_path: str) -> None:
-        if not self._enabled:
+    def _preload_sounds(self) -> None:
+        """Load all common audio files from assets_dir into memory to avoid latency on first play."""
+        if not self.assets_dir or not Path(self.assets_dir).exists():
             return
+
+        for path in Path(self.assets_dir).rglob("*"):
+            if not path.is_file():
+                continue
+            if path.suffix.lower() not in (".wav", ".ogg", ".mp3"):
+                continue
+            sound_path = str(path)
+            if sound_path in self._sounds:
+                continue
+            try:
+                snd = pygame.mixer.Sound(sound_path)
+                snd.set_volume(self.alert_volume)
+                self._sounds[sound_path] = snd
+            except Exception as exc:
+                logger.debug("Failed to preload sound %s: %s", sound_path, exc)
+
+    def play(self, sound_path: str) -> pygame.mixer.Channel | None:
+        if not self._enabled:
+            return None
 
         try:
             sound = self._sounds.get(sound_path)
@@ -89,10 +114,12 @@ class AudioPlayer:
                 sound = pygame.mixer.Sound(sound_path)
                 sound.set_volume(self.alert_volume)
                 self._sounds[sound_path] = sound
-            sound.play()
+            channel = sound.play()
+            return channel
         except pygame.error as exc:
             logger.warning("Could not play alert sound %s: %s", sound_path, exc)
             self._notify_status("Audio Error", "Play failed")
+            return None
 
     def _notify_status(self, title: str, detail: str) -> None:
         if self.status_callback is not None:
@@ -192,6 +219,7 @@ class FlightTracker:
         announcement_delay_seconds: float = 0.5,
         enable_airportdb_lookup: bool = True,
         airportdb_throttle_minutes: int = 1,
+        aeroapi_max_altitude_feet: int = 0,
     ) -> None:
         self.client = client
         self.alert_cache = alert_cache
@@ -220,6 +248,7 @@ class FlightTracker:
             self.airportdb_client.status_callback = self._show_display_error
         self.tts_player = tts_player or TextToSpeech(volume=100)
         self.enable_airline_announcement = enable_airline_announcement
+        self.aeroapi_max_altitude_feet = aeroapi_max_altitude_feet
         
         # Sequential announcement processing
         self._announcement_queue: Queue = Queue()
@@ -227,11 +256,10 @@ class FlightTracker:
         self._announcement_thread_active = False
         self._start_announcement_processor()
         
-        # AirportDB throttling configuration
+        # AirportDB configuration (free with internal caching)
         self.enable_airportdb_lookup = enable_airportdb_lookup
         self.airportdb_throttle_seconds = airportdb_throttle_minutes * 60
-        self.last_airportdb_call_time = 0.0
-        self.announcement_delay_seconds = announcement_delay_seconds
+        self._last_airportdb_call = 0.0
 
     def _start_announcement_processor(self) -> None:
         """Start the background thread that processes announcements sequentially."""
@@ -247,17 +275,12 @@ class FlightTracker:
     def _announcement_processor_loop(self) -> None:
         """Process announcements one at a time from the queue."""
         while self._announcement_thread_active:
-            try:
-                # Get next announcement (blocks until available)
-                announcement = self._announcement_queue.get(timeout=0.5)
-                if announcement is None:
-                    # Sentinel value to stop
-                    break
-                airline, callsign, origin, destination = announcement
-                self._play_announcement(airline, callsign, origin, destination)
-            except Exception:
-                # Queue timeout, continue looping
-                pass
+            # Block until an announcement is available. Use None as sentinel to stop.
+            announcement = self._announcement_queue.get()
+            if announcement is None:
+                break
+            airline, callsign, origin, destination = announcement
+            self._play_announcement(airline, callsign, origin, destination)
 
     def _play_announcement(
         self,
@@ -268,8 +291,6 @@ class FlightTracker:
     ) -> None:
         """Play a single announcement to audio."""
         try:
-            # Wait for alert sound to finish (typical alert sound is ~0.3 seconds)
-            time.sleep(0.3)
             logger.info(
                 "Playing announcement: %s %s %s -> %s",
                 airline,
@@ -296,25 +317,27 @@ class FlightTracker:
 
     def _should_call_airportdb(self, flight_details: 'models.FlightDetails | None') -> bool:
         """
-        Smart check to determine if AirportDB lookup is necessary.
-        Avoid unnecessary API calls.
+        Smart check to determine if an AirportDB resolution attempt is required.
         """
         if not self.enable_airportdb_lookup or self.airportdb_client is None:
             return False
         
         if flight_details is None:
             return False
-        
-        # Check throttling
-        now = time.time()
-        if now - self.last_airportdb_call_time < self.airportdb_throttle_seconds:
-            logger.debug("AirportDB call throttled (%.0f seconds remaining)", 
-                        self.airportdb_throttle_seconds - (now - self.last_airportdb_call_time))
+
+        # 1. Check if the values actually look like 4-character ICAO codes that need enrichment.
+        # This prevents redundant calls if the data is already a label or empty.
+        def needs_lookup(code: str | None) -> bool:
+            if not code:
+                return False
+            stripped = code.strip()
+            return len(stripped) == 4 and stripped.isalnum()
+
+        if not (needs_lookup(flight_details.origin) or needs_lookup(flight_details.destination)):
             return False
-        
-        # Only call if we have airport codes to look up
-        has_airport_data = flight_details.origin or flight_details.destination
-        return bool(has_airport_data)
+
+        # 2. Enforce time-based throttling to limit frequency of resolutions.
+        return time.monotonic() - self._last_airportdb_call >= self.airportdb_throttle_seconds
 
     def display_startup_banner(self) -> None:
         location = self.location_service.get_location_name(self.latitude, self.longitude)
@@ -342,13 +365,22 @@ class FlightTracker:
     def emit_alert(self, flight: FlightState) -> None:
         flight_details = None
         airline = get_airline_name(flight.callsign, self.airline_map)
-        if airline and self.flightaware_client is not None:
+        
+        # Determine if we should spend an AeroAPI call (curbing high-altitude overflights)
+        should_query_aeroapi = bool(airline and self.flightaware_client)
+        if should_query_aeroapi and self.aeroapi_max_altitude_feet > 0:
+            alt_feet = (flight.baro_altitude or 0) * 3.28084
+            if alt_feet > self.aeroapi_max_altitude_feet:
+                should_query_aeroapi = False
+                logger.info("Skipping AeroAPI for %s: altitude %.0f ft exceeds limit", flight.callsign, alt_feet)
+
+        if should_query_aeroapi:
             flight_details = self.flightaware_client.get_flight_details(flight.callsign)
         
-        # Only call AirportDB if smart checks allow it (throttled + necessary)
+        # Only call AirportDB if smart checks allow it (no throttling, AirportDB is free)
         if self._should_call_airportdb(flight_details):
-            self.last_airportdb_call_time = time.time()
             flight_details = self.airportdb_client.enrich_flight_details(flight_details)
+            self._last_airportdb_call = time.monotonic()
         
         # Trim airport codes from labels for display
         if flight_details is not None:
@@ -365,15 +397,21 @@ class FlightTracker:
             self.assets_dir,
             flight_details=flight_details,
         )
-        self.audio_player.play(alert.sound_path)
+        alert_channel = self.audio_player.play(alert.sound_path)
+        self.display.show_alert(alert)
         
-        # Queue announcement for sequential processing (no delay, queue manages it)
+        # Wait for the specific alert sound channel to finish playing
+        # This ensures announcements start immediately after sound ends with zero gap
+        if alert_channel is not None:
+            while alert_channel.get_busy():
+                time.sleep(0.01)  # Check every 10ms
+        
+        # Queue announcement for sequential processing immediately after sound finishes
         if self.enable_airline_announcement and airline and self.tts_player:
             origin = flight_details.origin if flight_details is not None else None
             destination = flight_details.destination if flight_details is not None else None
             self._announcement_queue.put((airline, flight.callsign, origin, destination))
         
-        self.display.show_alert(alert)
         logger.info("\n----------------------------")
         logger.info("%s", alert.line_1)
         logger.info("%s", alert.line_2)
@@ -387,8 +425,7 @@ class FlightTracker:
     ) -> None:
         """Announce airline name after alert sound plays (in background thread)."""
         try:
-            # Wait 1 second for alert sound to finish playing
-            time.sleep(1.5)
+            # Alert sound already finished, start announcement immediately (no delay)
             logger.info(
                 "Starting airline announcement: %s %s %s -> %s",
                 airline,

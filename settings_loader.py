@@ -25,6 +25,7 @@ class PathSettings:
     airplane_facts_path: Path
     log_path: Path
     flightaware_usage_file: Path
+    flightaware_cache_file: Path
     airportdb_cache_file: Path
     silent_audio_path: Path
     alert_audio_path: Path
@@ -59,6 +60,7 @@ class FlightAwareSettings:
     request_timeout_seconds: int
     lookup_window_days: int
     max_pages: int
+    max_altitude_feet: int
 
 
 @dataclass(frozen=True)
@@ -204,6 +206,7 @@ def load_settings() -> Settings:
         airplane_facts_path=BASE_DIR / str(paths_table["airplane_facts_path"]),
         log_path=BASE_DIR / str(paths_table["log_path"]),
         flightaware_usage_file=BASE_DIR / str(paths_table["flightaware_usage_file"]),
+        flightaware_cache_file=BASE_DIR / str(paths_table.get("flightaware_cache_file", "data/flightaware_cache.json")),
         airportdb_cache_file=BASE_DIR / str(paths_table["airportdb_cache_file"]),
         silent_audio_path=BASE_DIR / str(paths_table["silent_audio_path"]),
         alert_audio_path=BASE_DIR / str(paths_table["alert_audio_path"]),
@@ -276,6 +279,10 @@ def load_settings() -> Settings:
             max_pages=_get_int(
                 "FLIGHTAWARE_MAX_PAGES",
                 int(flightaware_advanced_table["max_pages"]),
+            ),
+            max_altitude_feet=_get_int(
+                "FLIGHTAWARE_MAX_ALTITUDE_FEET",
+                int(flightaware_advanced_table.get("max_altitude_feet", 0)),
             ),
         ),
         airportdb=AirportDbSettings(

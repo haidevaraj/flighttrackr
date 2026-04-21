@@ -1,36 +1,26 @@
-# 🛩️ Pi Radar
 
-> A real-time flight tracker for Raspberry Pi with voice alerts and OLED display
+                                  "Turn your Pi into a flight radar station"
 
-[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org)
-[![License: Source-Available](https://img.shields.io/badge/License-Source--Available-green.svg)](LICENSE.md)
-[![Raspberry Pi 5](https://img.shields.io/badge/Raspberry%20Pi-5-red.svg)](https://www.raspberrypi.com)
+## My Fork
 
----
+This is a fork of [ajharnak/flighttrackr](https://github.com/ajharnak/flighttrackr) with the following additions:
 
-## ✨ What is PiRadar?
+### New Features
+- **Text-to-Speech Support** — Audio alerts via Bluetooth speaker
+- Configurable speech alerts for detected aircraft
+## Text-to-Speech (TTS) Feature
 
-PiRadar monitors aircraft in your airspace and alerts you in real-time with:
-- 🔊 **Voice announcements** via Bluetooth speaker (Indian English or US English)
-- 📱 **Live OLED display** showing flight details (callsign, route, altitude, speed)
-- 🎵 **Smart audio alerts** (chime for normal flights, alert tone for emergency squawks)
-- 🌐 **OpenSky Network API** for continuous flight tracking
-- ✈️ **FlightAware enrichment** (optional) for airline names and routes
-- 🗺️ **Airport database lookups** for origin/destination info
+This fork adds audio alerts using **Google Text-to-Speech (gTTS)** with a real human Indian female voice.
 
----
+### TTS Engine
+- **Primary:** gTTS v2.3.1 (Google Text-to-Speech - High quality, real human voice)
+  - Language: English with Indian accent (`lang='en'`, `tld='co.in'`)
+  - Provides realistic female voice for flight alerts
+  
+- **Fallback:** Coqui TTS (High-quality offline synthesis using VITS models)
 
-## 🚀 Quick Start
-
-### Prerequisites
-- **Raspberry Pi 5** (or Pi 4, Pi Zero 2W)
-- **Python 3.11+**
-- **Bluetooth speaker** (or HDMI audio)
-- **Optional:** 2.42" SSD1309 OLED display (I2C)
-- **WiFi connection**
-
-### 1️⃣ Clone & Setup
-
+### Installation
+TTS dependencies are included in `requirements.txt`:
 ```bash
 git clone https://github.com/haidevaraj/PiRadar.git
 cd PiRadar
@@ -428,67 +418,58 @@ curl -H "x-apikey: YOUR_KEY" "https://aeroapi.flightaware.com/aeroapi/me"
 ### High CPU Usage
 
 ```bash
-# Increase poll_interval_seconds in config.toml
-# Default is 10 seconds, try 30 or 60
+journalctl -u flighttrackr.service -f
 ```
 
----
+Useful service commands:
 
-## 📦 Dependencies
+- Start: `sudo systemctl start flighttrackr.service`
+- Stop: `sudo systemctl stop flighttrackr.service`
+- Restart: `sudo systemctl restart flighttrackr.service`
+- Disable autostart: `sudo systemctl disable flighttrackr.service`
 
-```
-pygame==2.5.2          # Audio playback
-requests==2.31.0       # HTTP client
-pydantic==2.4.2        # Config validation
-TTS==0.22.0            # Coqui TTS (offline speech)
-pyttsx3==2.90          # Fallback TTS
-gTTS==2.3.1            # Google TTS (optional)
-```
+## How FlightAware usage is minimized
 
-See `requirements.txt` for full list.
+- FlightAware is only queried for callsigns whose prefix matches a known airline in `assets/icao_to_airline_names.json`
+- Callsign lookups are cached for a short time, so the same ident is not re-fetched immediately
+- Re-alerts are suppressed by `cooldown_minutes`, so the same ident does not repeatedly trigger enrichments
+- Snooze hours stop normal polling during quiet times
+- `monthly_call_limit` hard-stops FlightAware usage when your cap is reached
 
----
+This means you can still see nearby aircraft from OpenSky without necessarily spending a FlightAware lookup on every plane overhead.
 
-## 📝 License
+## Alert behavior
 
-**Source-available for personal/hobbyist use only.**
+When a new flight is detected inside the configured radius, the app will:
 
-You may NOT use this project for commercial purposes without written permission.
+- Play `assets/chime.mp3` for normal alerts
+- Play `assets/alert.mp3` for squawk `7700` or `7500`
+- Log the flight details to the console
+- Show alerts and system status on the OLED when enabled
+- Render a dashboard-style alert layout with a callsign header, route/type detail line, and bottom widgets for `SPD`, `HDG`, `ALT`, and `VS`
+- Translate common aircraft type codes into friendlier names via `assets/aircraft_types.json`
 
-See [LICENSE.md](LICENSE.md) for full terms.
+If FlightAware is configured and the callsign looks like a known airline, the alert may also include:
 
-**Original author:** [A.J. Harnak](https://github.com/ajharnak/flighttrackr)  
-**Fork author:** [haidevaraj](https://github.com/haidevaraj)
+- origin and destination airports
+- a cleaned-up aircraft type like `CRJ-900` instead of a longer manufacturer-prefixed label
 
----
+When the display is idle, it rotates airplane facts in random order without repeats until the full fact list has been shown.
 
-## ☕ Support
+## Notes
 
-If you find PiRadar useful, consider supporting the original author:
+- If `pygame` cannot initialize the mixer, the app will keep running and log a warning instead of crashing.
 
-[Buy A.J. Harnak a coffee](https://buymeacoffee.com/ajharnak) ☕
+## Author, license, and warranty
 
----
+Author: A.J. Harnak
 
-## 🐛 Contributing
+If you like this project, consider buying me a coffee - https://buymeacoffee.com/ajharnak . Totally optional but greatly appreciated!
 
-Found a bug? Want a feature?
+This project is source-available for personal, hobbyist, educational, and other non-commercial use only.
 
-1. Fork the repo
-2. Create a feature branch (`git checkout -b feature/amazing-idea`)
-3. Commit changes (`git commit -am 'Add amazing idea'`)
-4. Push to branch (`git push origin feature/amazing-idea`)
-5. Open a Pull Request
+You may not use this project, or a modified version of it, for commercial purposes without explicit written permission from the author.
 
----
+This project is provided as-is, with no warranty of any kind. That includes no warranty for correctness, reliability, fitness for a particular purpose, hardware safety, API costs, or regulatory compliance. You are responsible for your own hardware, accounts, wiring, credentials, and operating costs.
 
-## 📚 Resources
-
-- [OpenSky API Docs](https://opensky-network.org/apidoc/)
-- [FlightAware AeroAPI](https://www.flightaware.com/aeroapi/portal/)
-- [Raspberry Pi Docs](https://www.raspberrypi.com/documentation/)
-- [Coqui TTS](https://github.com/coqui-ai/TTS)
-
----
-
-**Happy tracking! 🛩️✈️**
+See `LICENSE.md` for the full terms.

@@ -3,40 +3,56 @@ from io import BytesIO
 from pathlib import Path
 import tempfile
 import subprocess
+import atexit
 
 logger = logging.getLogger(__name__)
 
+# Keep track of temp files to prevent deletion before playback completes
+_temp_files = []
+
+def _cleanup_temp_files():
+    """Clean up any remaining temp files on exit."""
+    for tmp_path in _temp_files:
+        try:
+            Path(tmp_path).unlink()
+        except:
+            pass
+
+atexit.register(_cleanup_temp_files)
+
 
 class TextToSpeech:
-    """Text-to-speech player using Google TTS (gTTS) for real human female Indian voice."""
+    """Text-to-speech player using Google TTS (gTTS) for real human female American voice (airport announcement style)."""
 
-    def __init__(self, volume: int = 100, language: str = "en-IN"):
+    def __init__(self, volume: int = 100, language: str = "en", tld: str = "com"):
         """
         Initialize TextToSpeech player.
 
         Args:
             volume: Volume level (0-100)
-            language: Language code ('en-IN' = Indian English, 'en' = English US)
+            language: Language code ('en' = English)
+            tld: Top-level domain for regional accent ('com' = US, 'co.in' = India)
         """
         self.volume = volume
         self.language = language
+        self.tld = tld
         self.tts_engine = self._detect_tts_engine()
-        logger.info(f"TTS Engine: {self.tts_engine} | Language: {language} | Volume: {volume}%")
+        logger.info(f"TTS Engine: {self.tts_engine} | Language: {language} | TLD: {tld} | Volume: {volume}%")
 
     def _detect_tts_engine(self) -> str:
         """Detect available TTS engine on system."""
         # Check for gTTS (high-quality Google voices - PRIORITY)
         try:
             from gtts import gTTS
-            logger.info("✓ Using gTTS (Google Text-to-Speech - Real Human Indian Female Voice)")
+            logger.info("✓ Using gTTS (Google Text-to-Speech - Real Human American Female Voice)")
             return "gtts"
         except ImportError:
             logger.warning("gTTS not available, install: pip3 install gTTS")
 
-        # Fallback to pyttsx3
+        # Fallback to pyttsx3 (offline synthesis)
         try:
             import pyttsx3
-            logger.info("⚠ Using pyttsx3 as fallback (synthetic voice)")
+            logger.info("⚠ Using pyttsx3 as fallback (offline voice synthesis)")
             return "pyttsx3"
         except ImportError:
             pass
@@ -110,45 +126,42 @@ class TextToSpeech:
         return self.speak_airline_name(message)
 
     def _speak_with_gtts(self, text: str) -> bool:
-        """Use Google Text-to-Speech for high-quality real human Indian female voice."""
+        """Use Google Text-to-Speech for high-quality real human American female voice (airport announcement style)."""
         try:
             from gtts import gTTS
             
-            logger.info(f"🔊 Speaking via gTTS (Indian Female Voice): {text}")
+            logger.info(f"🔊 Speaking via gTTS (American Female Voice): {text}")
             
-            # Create gTTS object with Indian English voice
-            tts = gTTS(text=text, lang=self.language, slow=False)
+            # Create gTTS object with American English voice - normal speed
+            tts = gTTS(text=text, lang=self.language, tld=self.tld, slow=False)
             
             # Save to temporary MP3 file
             with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
                 tts.save(tmp.name)
                 tmp_path = tmp.name
             
+            # Track temp file for cleanup
+            _temp_files.append(tmp_path)
+            
             try:
-                # Play using ffplay (best compatibility)
-                subprocess.run(
+                # Play using ffplay (non-blocking)
+                subprocess.Popen(
                     ["ffplay", "-nodisp", "-autoexit", "-v", "0", tmp_path],
-                    timeout=60,
-                    capture_output=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
                 )
-                logger.info("✓ gTTS speech completed")
+                logger.info("✓ gTTS speech started")
                 return True
             except FileNotFoundError:
-                # Fallback: try with paplay (PipeWire)
+                # Fallback: try with paplay (PipeWire) - non-blocking
                 logger.warning("ffplay not found, trying paplay...")
-                subprocess.run(
+                subprocess.Popen(
                     ["paplay", tmp_path],
-                    timeout=60,
-                    capture_output=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
                 )
-                logger.info("✓ gTTS speech completed via paplay")
+                logger.info("✓ gTTS speech started via paplay")
                 return True
-            finally:
-                # Clean up temp file
-                try:
-                    Path(tmp_path).unlink()
-                except:
-                    pass
                 
         except ImportError:
             logger.error("✗ gTTS not installed. Install: pip3 install gTTS")
@@ -175,9 +188,8 @@ class TextToSpeech:
             
             engine.say(text)
             engine.runAndWait()
-            logger.info("✓ pyttsx3 speech completed")
+            logger.info("✓ pyttsx3 speech started")
             return True
         except Exception as exc:
             logger.error("✗ pyttsx3 speech failed: %s", exc)
             return False
-
