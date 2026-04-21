@@ -1,4 +1,4 @@
-#                                  🛩️ PiRadar
+# 🛩️ Pi Radar
 
 > A real-time flight tracker for Raspberry Pi with voice alerts and OLED display
 
