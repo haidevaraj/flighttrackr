@@ -1,3 +1,15 @@
+
+## My Fork
+
+This is a fork of [ajharnak/flighttrackr](https://github.com/ajharnak/flighttrackr) with the following additions:
+
+### New Features
+- **Text-to-Speech Support** — Audio alerts via Bluetooth speaker
+- Configurable speech alerts for detected aircraft
+
+### Original Project
+See the original repository for the base FlightTrackr project.
+
 # FlightTrackr
 
 FlightTrackr watches nearby OpenSky traffic and logs a quick alert when a new flight enters your monitoring area. Audio alerts use `pygame` so the mixer can stay open between alerts, which is helpful on Raspberry Pi setups that pop when the audio device repeatedly powers up and down.
@@ -392,3 +404,5 @@ You may not use this project, or a modified version of it, for commercial purpos
 This project is provided as-is, with no warranty of any kind. That includes no warranty for correctness, reliability, fitness for a particular purpose, hardware safety, API costs, or regulatory compliance. You are responsible for your own hardware, accounts, wiring, credentials, and operating costs.
 
 See `LICENSE.md` for the full terms.
+
+
