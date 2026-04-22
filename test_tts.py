@@ -30,6 +30,7 @@ def test_airline_announcements():
             callsign,
             origin="New Delhi Indira Gandhi Airport",
             destination="Mumbai Chhatrapati Shivaji Airport",
+            delay_minutes=None  # On time
         )
         if success:
             print(f"✓ Successfully announced: {airline_name}")

@@ -182,5 +182,61 @@
       "destination": "KSAT",
       "aircraft_type": "C25C"
     }
+  },
+  "UCA4264": {
+    "expires_at": "2026-04-22T21:40:14.801695+00:00",
+    "details": {
+      "origin": "KICT",
+      "destination": "KIAH",
+      "aircraft_type": "E145"
+    }
+  },
+  "UAL1242": {
+    "expires_at": "2026-04-22T21:41:06.817065+00:00",
+    "details": {
+      "origin": "MHLM",
+      "destination": "KIAH",
+      "aircraft_type": "B38M"
+    }
+  },
+  "UAL619": {
+    "expires_at": "2026-04-22T21:41:27.912866+00:00",
+    "details": {
+      "origin": "KSFO",
+      "destination": "KIAH",
+      "aircraft_type": "B39M"
+    }
+  },
+  "ASH3986": {
+    "expires_at": "2026-04-22T21:43:23.735517+00:00",
+    "details": {
+      "origin": "KABQ",
+      "destination": "KIAH",
+      "aircraft_type": "E75L"
+    }
+  },
+  "UAL1455": {
+    "expires_at": "2026-04-22T21:44:15.687603+00:00",
+    "details": {
+      "origin": "MYNN",
+      "destination": "KIAH",
+      "aircraft_type": "B738"
+    }
+  },
+  "UAL521": {
+    "expires_at": "2026-04-22T21:45:41.694244+00:00",
+    "details": {
+      "origin": "KATL",
+      "destination": "KIAH",
+      "aircraft_type": "B737"
+    }
+  },
+  "ASH6185": {
+    "expires_at": "2026-04-22T21:46:34.815432+00:00",
+    "details": {
+      "origin": "KSAV",
+      "destination": "KIAH",
+      "aircraft_type": "E75L"
+    }
   }
 }

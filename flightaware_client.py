@@ -175,7 +175,8 @@ class FlightAwareClient:
                         details_dict = {
                             "origin": v.details.origin,
                             "destination": v.details.destination,
-                            "aircraft_type": v.details.aircraft_type
+                            "aircraft_type": v.details.aircraft_type,
+                            "delay_minutes": v.details.delay_minutes
                         }
                     serializable[k] = {
                         "expires_at": v.expires_at.isoformat(),
@@ -232,6 +233,7 @@ class FlightAwareClient:
             origin=self._extract_airport_code(best_match.get("origin")),
             destination=self._extract_airport_code(best_match.get("destination")),
             aircraft_type=self._extract_aircraft_type(best_match),
+            delay_minutes=self._calculate_delay_minutes(best_match, now=now),
         )
         logger.info(
             "FlightAware enriched %s (%s lookups left this month).",
@@ -349,6 +351,26 @@ class FlightAwareClient:
             value = flight.get(field)
             if value:
                 return str(value).strip().upper()
+        return None
+
+    def _calculate_delay_minutes(self, flight: dict, now: datetime) -> int | None:
+        """Calculate flight delay in minutes. Positive = delayed, Negative = early, None = on time."""
+        # For airborne flights, compare actual departure vs scheduled
+        actual_off = self._parse_timestamp(flight.get("actual_off"))
+        scheduled_off = self._parse_timestamp(flight.get("scheduled_off"))
+
+        if actual_off and scheduled_off:
+            delay_seconds = (actual_off - scheduled_off).total_seconds()
+            delay_minutes = int(delay_seconds / 60)
+            return delay_minutes if abs(delay_minutes) >= 5 else None  # Only report delays >= 5 minutes
+
+        # For flights not yet departed, check estimated departure vs scheduled
+        estimated_off = self._parse_timestamp(flight.get("estimated_off"))
+        if estimated_off and scheduled_off:
+            delay_seconds = (estimated_off - scheduled_off).total_seconds()
+            delay_minutes = int(delay_seconds / 60)
+            return delay_minutes if abs(delay_minutes) >= 5 else None
+
         return None
 
     def _notify_status(self, title: str, detail: str) -> None:

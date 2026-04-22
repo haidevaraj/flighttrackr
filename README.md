@@ -365,7 +365,7 @@ When a new flight enters your detection radius:
 1. 🔊 **Alert sound plays** (chime.mp3 or alert.mp3)
 2. 📱 **OLED shows flight details**
 3. 🗣️ **Voice announcement** (if enabled)
-   - "Southwest Airlines SWA4389 Hartsfield Jackson Atlanta International Airport -> San Antonio International Airport. Cruising at 35,000 feet, 451 miles per hour, heading south."
+   - "Southwest Airlines SWA4389 Hartsfield Jackson Atlanta International Airport -> San Antonio International Airport. Cruising at 35,000 feet, 451 miles per hour, heading south, 15 minutes delayed."
 4. 📝 **Logged to console**
 
 **Squawk codes:**

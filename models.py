@@ -31,6 +31,7 @@ class FlightDetails:
     origin: str | None = None
     destination: str | None = None
     aircraft_type: str | None = None
+    delay_minutes: int | None = None  # Positive = delayed, Negative = early, None = on time
 
 
 @dataclass(frozen=True)

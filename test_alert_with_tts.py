@@ -57,7 +57,8 @@ def test_flight_alert_with_tts():
         destination="San Antonio International Airport",
         altitude=10668, # Approx 35,000 feet
         speed=201.5,    # Approx 451 mph
-        heading=180     # South
+        heading=180,    # South
+        delay_minutes=15  # 15 minutes delayed
     )
     
     if success:
@@ -68,7 +69,7 @@ def test_flight_alert_with_tts():
     print("\n" + "=" * 60)
     print("Test complete! You should have heard:")
     print("  1. Alert sound (beep)")
-    print("  2. Female voice saying 'Southwest Airlines SWA4389 Hartsfield Jackson Atlanta International Airport -> San Antonio International Airport. Cruising at 35,000 feet, 451 miles per hour, heading south.'")
+    print("  2. Female voice saying 'Southwest Airlines SWA4389 Hartsfield Jackson Atlanta International Airport -> San Antonio International Airport. Cruising at 35,000 feet, 451 miles per hour, heading south, 15 minutes delayed.'")
 
 if __name__ == "__main__":
     test_flight_alert_with_tts()

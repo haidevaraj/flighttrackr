@@ -280,7 +280,16 @@ class FlightTracker:
                 speed,
                 heading,
             )
-            self.tts_player.speak_flight_alert(airline, callsign, origin, destination, altitude, speed, heading)
+            self.tts_player.speak_flight_alert(
+                airline, 
+                callsign, 
+                origin, 
+                destination,
+                altitude=flight.altitude_m,
+                speed=flight.velocity_ms,
+                heading=flight.heading_deg,
+                delay_minutes=flight_details.delay_minutes if flight_details else None
+            )
             logger.info("Announcement completed")
         except Exception as exc:
             logger.error("Text-to-speech announcement failed: %s", exc)

@@ -101,6 +101,7 @@ class TextToSpeech:
         altitude: float | None = None,
         speed: float | None = None,
         heading: float | None = None,
+        delay_minutes: int | None = None,
     ) -> bool:
         """
         Speak a complete flight alert message.
@@ -113,6 +114,7 @@ class TextToSpeech:
             altitude: Altitude in meters
             speed: Speed in meters per second
             heading: Heading in degrees
+            delay_minutes: Delay in minutes (positive = delayed, negative = early, None = on time)
 
         Returns:
             True if successful
@@ -146,6 +148,12 @@ class TextToSpeech:
         if heading is not None:
             direction = self._get_cardinal_direction(heading)
             details.append(f"heading {direction}")
+        if delay_minutes is not None:
+            if delay_minutes > 0:
+                details.append(f"{delay_minutes} minutes delayed")
+            elif delay_minutes < 0:
+                early_minutes = abs(delay_minutes)
+                details.append(f"{early_minutes} minutes early")
 
         if details:
             message += " " + ", ".join(details) + "."
