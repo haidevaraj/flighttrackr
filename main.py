@@ -9,7 +9,7 @@ from settings_loader import (
     load_airline_map,
     load_settings,
 )
-from flightaware_client import FlightAwareClient
+from flight_database import FlightDatabase
 from lcd_display import build_display
 from opensky_client import OpenSkyClient
 from services import AlertCache, AudioPlayer, FlightTracker, LocationService
@@ -42,7 +42,6 @@ def main() -> None:
     paths = settings.paths
     tracker_settings = settings.tracker
     opensky_settings = settings.opensky
-    flightaware_settings = settings.flightaware
     airportdb_settings = settings.airportdb
     location_settings = settings.location
     audio_settings = settings.audio
@@ -82,25 +81,16 @@ def main() -> None:
             mixer_buffer=audio_settings.mixer_buffer,
             silence_path=paths.silent_audio_path,
         ),
-        flightaware_client=FlightAwareClient(
-            api_key=flightaware_settings.api_key,
-            usage_file=paths.flightaware_usage_file,
-            cache_file=paths.flightaware_cache_file,
-            monthly_limit=flightaware_settings.monthly_call_limit,
-            callsign_cache_ttl_minutes=flightaware_settings.callsign_cache_ttl_minutes,
-            request_timeout_seconds=flightaware_settings.request_timeout_seconds,
-            lookup_window_days=flightaware_settings.lookup_window_days,
-            max_pages=flightaware_settings.max_pages,
-        ),
+        flight_database=FlightDatabase(paths.base_dir / "flighttrackr.db"),
         airportdb_client=AirportDbClient(
             api_token=airportdb_settings.api_token,
+            master_db_path=paths.master_airport_db_path,
             cache_file=paths.airportdb_cache_file, 
             request_timeout_seconds=airportdb_settings.request_timeout_seconds,
         ),
         display=build_display(display_settings=display_settings, airplane_facts_path=paths.airplane_facts_path),
         tts_player=TextToSpeech(volume=100, language="en", tld="com"),
         enable_airline_announcement=True,
-        aeroapi_max_altitude_feet=flightaware_settings.max_altitude_feet,
     )
     tracker.run_forever()
 

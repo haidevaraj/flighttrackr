@@ -15,17 +15,19 @@ class AirportDbClient:
     def __init__(
         self,
         api_token: str | None,
+        master_db_path: Path,
         cache_file: Path,
         request_timeout_seconds: int,
         session: requests.Session | None = None,
         status_callback: Callable[[str, str], None] | None = None,
     ) -> None:
         self.api_token = (api_token or "").strip()
+        self.master_db_path = master_db_path
         self.cache_file = cache_file
         self.request_timeout_seconds = request_timeout_seconds
         self.session = session or requests.Session()
         self.status_callback = status_callback
-        self.airports_by_code = self._load_cache()
+        self.airports_by_code = self._initialize_airport_data()
 
     def enrich_flight_details(self, flight_details: FlightDetails) -> FlightDetails:
         origin = self._resolve_airport_label(flight_details.origin)
@@ -52,6 +54,41 @@ class AirportDbClient:
         if airport is None:
             return normalized_code
         return self._build_label(airport, fallback=normalized_code)
+
+    def _initialize_airport_data(self) -> dict[str, dict[str, str]]:
+        """Initialize airport data from master DB and then overlay user cache."""
+        data = self._load_master_db()
+        # Update with persistent user cache (which might have more detail or API overrides)
+        cache_data = self._load_cache()
+        data.update(cache_data)
+        return data
+
+    def _load_master_db(self) -> dict[str, dict[str, str]]:
+        """Load static airport data from the local JSON file (mwgg/Airports format)."""
+        if not self.master_db_path.exists():
+            logger.info("Master airport database not found at %s. Skipping local DB load.", self.master_db_path)
+            return {}
+
+        try:
+            with open(self.master_db_path, "r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+                
+            # Map the mwgg/Airports format to our internal format
+            airports = {}
+            for code, details in payload.items():
+                icao = str(details.get("icao") or code).upper()
+                airports[icao] = {
+                    "icao_code": icao,
+                    "iata_code": str(details.get("iata") or "").upper(),
+                    "name": str(details.get("name") or "").strip(),
+                    "municipality": str(details.get("city") or "").strip(),
+                    "iso_country": str(details.get("country") or "").strip().upper(),
+                }
+            logger.info("✓ Loaded %d airports from master database.", len(airports))
+            return airports
+        except Exception as exc:
+            logger.warning("Could not read master airport database: %s", exc)
+            return {}
 
     def _fetch_airport(self, code: str) -> dict[str, str] | None:
         url = f"https://airportdb.io/api/v1/airport/{code}?apiToken={self.api_token}"

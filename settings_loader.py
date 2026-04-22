@@ -26,6 +26,7 @@ class PathSettings:
     log_path: Path
     flightaware_usage_file: Path
     flightaware_cache_file: Path
+    master_airport_db_path: Path
     airportdb_cache_file: Path
     silent_audio_path: Path
     alert_audio_path: Path
@@ -207,6 +208,7 @@ def load_settings() -> Settings:
         log_path=BASE_DIR / str(paths_table["log_path"]),
         flightaware_usage_file=BASE_DIR / str(paths_table["flightaware_usage_file"]),
         flightaware_cache_file=BASE_DIR / str(paths_table.get("flightaware_cache_file", "data/flightaware_cache.json")),
+        master_airport_db_path=BASE_DIR / "assets/airports.json",
         airportdb_cache_file=BASE_DIR / str(paths_table["airportdb_cache_file"]),
         silent_audio_path=BASE_DIR / str(paths_table["silent_audio_path"]),
         alert_audio_path=BASE_DIR / str(paths_table["alert_audio_path"]),

@@ -181,19 +181,16 @@ opensky_client_id = "YOUR_ID"
 opensky_client_secret = "YOUR_SECRET"
 ```
 
-### FlightAware AeroAPI (Optional, Paid)
+### FlightAware AeroAPI (Deprecated ❌)
 
-Provides airline names, routes, aircraft type.
+**FlightAware AeroAPI has been completely removed from this fork!**
 
-1. Sign up: https://www.flightaware.com/commercial/aeroapi/
-2. Add credit card (usage-based pricing)
-3. Get API key: https://www.flightaware.com/aeroapi/portal
-4. Add to `config.toml`:
-```toml
-flightaware_aeroapi_key = "YOUR_KEY"
-```
+Previously, the app used AeroAPI for flight enrichment (routes, aircraft type, delays). This was:
+- ❌ Expensive ($1-50+/month depending on usage)
+- ❌ Requires internet for every lookup
+- ❌ Rate limited
 
-**💡 Pro tip:** Set `monthly_call_limit = 50` to cap costs at ~$1/month
+**Solution:** Use the **local SQLite database** instead! See the [Local Flight Database section](#-local-flight-database-no-aeroapi-required) above.
 
 ### AirportDB (Free, Optional)
 
@@ -208,7 +205,89 @@ airportdb_api_token = "YOUR_TOKEN"
 
 ---
 
-## 🐧 Raspberry Pi Setup
+## � Local Flight Database (No AeroAPI Required!)
+
+**FlightAware AeroAPI has been completely removed!** FlightTrackr now uses a **local SQLite database** to store flight enrichment data instead. This means:
+
+✅ **Zero API costs** - No more expensive AeroAPI charges  
+✅ **Offline capable** - Works without internet (after initial data)  
+✅ **Fast lookups** - Instant database queries vs API wait times  
+✅ **Privacy** - All data stays on your device  
+
+### How It Works
+
+1. **OpenSky API** provides real-time flight tracking (free)
+2. **Local SQLite database** caches known routes and flight data
+3. **First time you see a flight**: Data stored locally for future use
+4. **Next time same flight appears**: Instant lookup from database!
+
+### Managing Your Flight Database
+
+Use the interactive database manager to:
+
+```bash
+python3 manage_flight_db.py
+```
+
+**Menu options:**
+- Add known flight routes (e.g., Houston → Denver)
+- View statistics of routes you've seen
+- Look up cached flight data
+- Add airline callsign mappings
+- Export data to JSON
+- Clean up old records
+
+### Populating Your Database
+
+**Method 1: Automatic (Recommended)**
+- Run the tracker normally with AirportDB enabled (free)
+- AirportDB enriches flights, data gets cached automatically
+- After 1-2 weeks of operation, your database fills up naturally
+
+**Method 2: Manual Entry**
+```bash
+python3 manage_flight_db.py
+# Option 1: Add known routes manually
+# Enter routes you know frequent your airspace
+```
+
+**Method 3: Bulk Import**
+```python
+from flight_database import FlightDatabase
+from pathlib import Path
+
+db = FlightDatabase(Path("data/flighttrackr.db"))
+
+# Add common routes from your area
+routes = [
+    ("KIAH", "KJFK", "B737"),  # Houston → NYC
+    ("KIAH", "KLAX", "B777"),  # Houston → LA
+    ("KIAH", "KORD", "A320"),  # Houston → Chicago
+]
+
+for origin, dest, aircraft in routes:
+    db.add_known_route(origin, dest, aircraft)
+```
+
+### Database Files
+
+```
+data/
+├── flighttrackr.db          ← Main SQLite database
+└── airportdb_cache.json     ← AirportDB enrichment cache (optional)
+```
+
+### Viewing Your Database
+
+```bash
+python3 manage_flight_db.py
+# Option 3: View all cached flights
+# Option 2: View frequent routes
+```
+
+---
+
+## �🐧 Raspberry Pi Setup
 
 ### 1. Flash OS
 

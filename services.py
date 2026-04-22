@@ -12,7 +12,7 @@ import requests
 
 from airportdb_client import AirportDbClient
 from formatter import build_alert_event, get_airline_name
-from flightaware_client import FlightAwareClient
+from flight_database import FlightDatabase
 from lcd_display import NullDisplay
 import models
 from models import FlightState
@@ -211,14 +211,13 @@ class FlightTracker:
         snooze_end_time: clock_time,
         location_service: LocationService | None = None,
         audio_player: AudioPlayer | None = None,
-        flightaware_client: FlightAwareClient | None = None,
+        flight_database: FlightDatabase | None = None,
         airportdb_client: AirportDbClient | None = None,
         display: NullDisplay | None = None,
         tts_player: TextToSpeech | None = None,
         enable_airline_announcement: bool = True,
         announcement_delay_seconds: float = 0.5,
         enable_airportdb_lookup: bool = True,
-        aeroapi_max_altitude_feet: int = 0,
     ) -> None:
         self.client = client
         self.alert_cache = alert_cache
@@ -238,16 +237,16 @@ class FlightTracker:
         self.audio_player = audio_player
         if self.audio_player is None:
             raise ValueError("FlightTracker requires an AudioPlayer instance.")
-        self.flightaware_client = flightaware_client
         self.airportdb_client = airportdb_client
         self.client.status_callback = self._show_display_error
-        if self.flightaware_client is not None:
-            self.flightaware_client.status_callback = self._show_display_error
         if self.airportdb_client is not None:
             self.airportdb_client.status_callback = self._show_display_error
         self.tts_player = tts_player or TextToSpeech(volume=100)
         self.enable_airline_announcement = enable_airline_announcement
-        self.aeroapi_max_altitude_feet = aeroapi_max_altitude_feet
+        self.flight_database = flight_database or FlightDatabase(Path("data/flighttrackr.db"))
+        
+        # Remove FlightAware references
+        self.flightaware_client = None
         
         # Lock to ensure only one alert (Sound + TTS) is processed at a time
         self._alert_lock = threading.Lock()
@@ -312,8 +311,9 @@ class FlightTracker:
         if not self.enable_airportdb_lookup or self.airportdb_client is None:
             return False
         
+        # If we have no details at all, we should try to look them up/create them
         if flight_details is None:
-            return False
+            return True
 
         # 1. Check if the values actually look like 4-character ICAO codes that need enrichment.
         # This prevents redundant calls if the data is already a label or empty.
@@ -357,18 +357,23 @@ class FlightTracker:
             flight_details = None
             airline = get_airline_name(flight.callsign, self.airline_map)
             
-            # Determine if we should spend an AeroAPI call
-            should_query_aeroapi = bool(airline and self.flightaware_client)
-            if should_query_aeroapi and self.aeroapi_max_altitude_feet > 0:
-                alt_feet = (flight.altitude_m or 0) * 3.28084
-                if alt_feet > self.aeroapi_max_altitude_feet:
-                    should_query_aeroapi = False
-
-            if should_query_aeroapi:
-                flight_details = self.flightaware_client.get_flight_details(flight.callsign)
+            # Query local flight database for cached enrichment data
+            flight_details = self.flight_database.get_flight_details(flight.callsign)
             
+            # If no cached data, optionally enrich from AirportDB (free)
             if self._should_call_airportdb(flight_details):
-                flight_details = self.airportdb_client.enrich_flight_details(flight_details)
+                enriched = self.airportdb_client.enrich_flight_details(flight_details or models.FlightDetails())
+                if enriched:
+                    flight_details = enriched
+                    # Store the enriched data in local database for future use
+                    if flight_details:
+                        self.flight_database.store_flight_details(
+                            callsign=flight.callsign,
+                            origin=flight_details.origin,
+                            destination=flight_details.destination,
+                            aircraft_type=flight_details.aircraft_type,
+                            delay_minutes=flight_details.delay_minutes
+                        )
             
             if flight_details is not None:
                 flight_details = models.FlightDetails(
