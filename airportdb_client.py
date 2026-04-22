@@ -59,9 +59,14 @@ class AirportDbClient:
     def _initialize_airport_data(self) -> dict[str, dict[str, str]]:
         """Initialize airport data from master DB and then overlay user cache."""
         data = self._load_master_db()
-        # Update with persistent user cache (which might have more detail or API overrides)
-        cache_data = self._load_cache()
-        data.update(cache_data)
+        
+        # Update with persistent user cache (e.g. from airportdb.io)
+        # This allows online lookups to supplement/override the local JSON
+        try:
+            cache_data = self._load_cache()
+            data.update(cache_data)
+        except Exception as exc:
+            logger.debug("No local cache to overlay: %s", exc)
         return data
 
     def _load_master_db(self) -> dict[str, dict[str, str]]:
@@ -77,13 +82,13 @@ class AirportDbClient:
             # Map the mwgg/Airports format to our internal format
             airports = {}
             for code, details in payload.items():
-                icao = str(details.get("icao") or code).upper()
+                icao = str(code).upper()
                 airports[icao] = {
                     "icao_code": icao,
-                    "iata_code": str(details.get("iata") or "").upper(),
+                    "iata_code": str(details.get("iata") or details.get("iata_code") or "").upper(),
                     "name": str(details.get("name") or "").strip(),
-                    "municipality": str(details.get("city") or "").strip(),
-                    "iso_country": str(details.get("country") or "").strip().upper(),
+                    "municipality": str(details.get("city") or details.get("municipality") or "").strip(),
+                    "iso_country": str(details.get("country") or details.get("iso_country") or "").strip().upper(),
                 }
             logger.info("✓ Loaded %d airports from master database.", len(airports))
             return airports

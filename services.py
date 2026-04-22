@@ -313,13 +313,13 @@ class FlightTracker:
         
         # If we have no details, we can't look up codes because OpenSky doesn't 
         # provide them. We only proceed if we have a record that needs name resolution.
-        if not flight_details or (not flight_details.origin and not flight_details.destination):
+        if not flight_details:
             return False
 
         # 1. Check if the values actually look like 4-character ICAO codes that need enrichment.
-        # This prevents redundant calls if the data is already a label or empty.
         def needs_lookup(code: str | None) -> bool:
-            if not code:
+            # Only lookup if the code exists and looks like a raw ICAO (4 chars, no spaces/brackets)
+            if not code or "(" in code:
                 return False
             stripped = code.strip()
             return len(stripped) == 4 and stripped.isalnum()
