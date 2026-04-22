@@ -267,11 +267,12 @@ class FlightTracker:
         altitude: float | None = None,
         speed: float | None = None,
         heading: float | None = None,
+        delay_minutes: int | None = None,
     ) -> None:
         """Play a single announcement to audio."""
         try:
             logger.info(
-                "Playing announcement: %s %s %s -> %s (Alt: %s, Spd: %s, Hdg: %s)",
+                "Playing announcement: %s %s %s -> %s (Alt: %s, Spd: %s, Hdg: %s, Delay: %s)",
                 airline,
                 callsign,
                 origin,
@@ -279,16 +280,17 @@ class FlightTracker:
                 altitude,
                 speed,
                 heading,
+                delay_minutes,
             )
             self.tts_player.speak_flight_alert(
-                airline, 
-                callsign, 
-                origin, 
-                destination,
-                altitude=flight.altitude_m,
-                speed=flight.velocity_ms,
-                heading=flight.heading_deg,
-                delay_minutes=flight_details.delay_minutes if flight_details else None
+                airline_name=airline,
+                callsign=callsign,
+                origin=origin,
+                destination=destination,
+                altitude=altitude,
+                speed=speed,
+                heading=heading,
+                delay_minutes=delay_minutes,
             )
             logger.info("Announcement completed")
         except Exception as exc:
@@ -362,7 +364,7 @@ class FlightTracker:
             # Determine if we should spend an AeroAPI call
             should_query_aeroapi = bool(airline and self.flightaware_client)
             if should_query_aeroapi and self.aeroapi_max_altitude_feet > 0:
-                alt_feet = (flight.baro_altitude or 0) * 3.28084
+                alt_feet = (flight.altitude_m or 0) * 3.28084
                 if alt_feet > self.aeroapi_max_altitude_feet:
                     should_query_aeroapi = False
 
@@ -378,6 +380,7 @@ class FlightTracker:
                     origin=self._trim_airport_code(flight_details.origin),
                     destination=self._trim_airport_code(flight_details.destination),
                     aircraft_type=flight_details.aircraft_type,
+                    delay_minutes=flight_details.delay_minutes,
                 )
 
             alert = build_alert_event(
@@ -403,7 +406,8 @@ class FlightTracker:
                     destination,
                     altitude=flight.altitude_m,
                     speed=flight.velocity_ms,
-                    heading=flight.heading_deg
+                    heading=flight.heading_deg,
+                    delay_minutes=flight_details.delay_minutes if flight_details else None
                 )
             
             logger.info("\n----------------------------")

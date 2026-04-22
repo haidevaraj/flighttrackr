@@ -170,6 +170,7 @@ def build_alert_event(
                 flight_details.aircraft_type,
                 aircraft_type_map,
             ),
+            delay_minutes=flight_details.delay_minutes,
         )
     line_2 = format_detailed_secondary_line(
         timestamp.strftime("%I:%M %p"),

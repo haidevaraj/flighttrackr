@@ -4,7 +4,8 @@
     "details": {
       "origin": "KPHX",
       "destination": "KIAH",
-      "aircraft_type": "A319"
+      "aircraft_type": "A319",
+      "delay_minutes": null
     }
   },
   "ASH6367": {
@@ -12,7 +13,8 @@
     "details": {
       "origin": "KCVG",
       "destination": "KIAH",
-      "aircraft_type": "E75L"
+      "aircraft_type": "E75L",
+      "delay_minutes": null
     }
   },
   "DAL2673": {
@@ -20,7 +22,8 @@
     "details": {
       "origin": "KMSP",
       "destination": "KIAH",
-      "aircraft_type": "BCS3"
+      "aircraft_type": "BCS3",
+      "delay_minutes": null
     }
   },
   "UCA4297": {
@@ -28,7 +31,8 @@
     "details": {
       "origin": "KLRD",
       "destination": "KIAH",
-      "aircraft_type": "E145"
+      "aircraft_type": "E145",
+      "delay_minutes": null
     }
   },
   "UAL1031": {
@@ -36,7 +40,8 @@
     "details": {
       "origin": "MPTO",
       "destination": "KIAH",
-      "aircraft_type": "B39M"
+      "aircraft_type": "B39M",
+      "delay_minutes": null
     }
   },
   "AAL2148": {
@@ -44,7 +49,8 @@
     "details": {
       "origin": "KCLT",
       "destination": "KIAH",
-      "aircraft_type": "A321"
+      "aircraft_type": "A321",
+      "delay_minutes": null
     }
   },
   "DAL1143": {
@@ -52,7 +58,8 @@
     "details": {
       "origin": "KLAX",
       "destination": "KIAH",
-      "aircraft_type": "A319"
+      "aircraft_type": "A319",
+      "delay_minutes": null
     }
   },
   "NKS464": {
@@ -60,7 +67,8 @@
     "details": {
       "origin": "KMCO",
       "destination": "KIAH",
-      "aircraft_type": "A21N"
+      "aircraft_type": "A21N",
+      "delay_minutes": null
     }
   },
   "UAL508": {
@@ -68,7 +76,8 @@
     "details": {
       "origin": "SKBO",
       "destination": "KIAH",
-      "aircraft_type": "B38M"
+      "aircraft_type": "B38M",
+      "delay_minutes": null
     }
   },
   "DAL2099": {
@@ -76,7 +85,8 @@
     "details": {
       "origin": "KLGA",
       "destination": "KIAH",
-      "aircraft_type": "BCS1"
+      "aircraft_type": "BCS1",
+      "delay_minutes": null
     }
   },
   "NKS462": {
@@ -84,7 +94,8 @@
     "details": {
       "origin": "KLGA",
       "destination": "KIAH",
-      "aircraft_type": "A21N"
+      "aircraft_type": "A21N",
+      "delay_minutes": null
     }
   },
   "SKW5946": {
@@ -92,7 +103,8 @@
     "details": {
       "origin": "MMSP",
       "destination": "KIAH",
-      "aircraft_type": "E75L"
+      "aircraft_type": "E75L",
+      "delay_minutes": null
     }
   },
   "UAL470": {
@@ -100,7 +112,8 @@
     "details": {
       "origin": "KMIA",
       "destination": "KIAH",
-      "aircraft_type": "B738"
+      "aircraft_type": "B738",
+      "delay_minutes": null
     }
   },
   "UAL2275": {
@@ -108,7 +121,8 @@
     "details": {
       "origin": "KPIT",
       "destination": "KIAH",
-      "aircraft_type": "B739"
+      "aircraft_type": "B739",
+      "delay_minutes": null
     }
   },
   "UAL6": {
@@ -116,7 +130,8 @@
     "details": {
       "origin": "RJAA",
       "destination": "KIAH",
-      "aircraft_type": "B789"
+      "aircraft_type": "B789",
+      "delay_minutes": null
     }
   },
   "XSR315": {
@@ -124,7 +139,8 @@
     "details": {
       "origin": "KSGR",
       "destination": "KFTW",
-      "aircraft_type": "C56X"
+      "aircraft_type": "C56X",
+      "delay_minutes": null
     }
   },
   "SWA4389": {
@@ -132,7 +148,8 @@
     "details": {
       "origin": "KATL",
       "destination": "KSAT",
-      "aircraft_type": "B737"
+      "aircraft_type": "B737",
+      "delay_minutes": null
     }
   },
   "UAL672": {
@@ -140,7 +157,8 @@
     "details": {
       "origin": "KEWR",
       "destination": "KIAH",
-      "aircraft_type": "B39M"
+      "aircraft_type": "B39M",
+      "delay_minutes": null
     }
   },
   "UAL2406": {
@@ -148,7 +166,8 @@
     "details": {
       "origin": "KMCO",
       "destination": "KIAH",
-      "aircraft_type": "B739"
+      "aircraft_type": "B739",
+      "delay_minutes": null
     }
   },
   "UCA4845": {
@@ -156,7 +175,8 @@
     "details": {
       "origin": "KSHV",
       "destination": "KIAH",
-      "aircraft_type": "E145"
+      "aircraft_type": "E145",
+      "delay_minutes": null
     }
   },
   "UAL1341": {
@@ -164,7 +184,8 @@
     "details": {
       "origin": "KBNA",
       "destination": "KIAH",
-      "aircraft_type": "A319"
+      "aircraft_type": "A319",
+      "delay_minutes": null
     }
   },
   "SKW5442": {
@@ -172,7 +193,8 @@
     "details": {
       "origin": "KLIT",
       "destination": "KIAH",
-      "aircraft_type": "CRJ2"
+      "aircraft_type": "CRJ2",
+      "delay_minutes": null
     }
   },
   "CRE345": {
@@ -180,7 +202,8 @@
     "details": {
       "origin": "KCHO",
       "destination": "KSAT",
-      "aircraft_type": "C25C"
+      "aircraft_type": "C25C",
+      "delay_minutes": null
     }
   },
   "UCA4264": {
@@ -188,7 +211,8 @@
     "details": {
       "origin": "KICT",
       "destination": "KIAH",
-      "aircraft_type": "E145"
+      "aircraft_type": "E145",
+      "delay_minutes": null
     }
   },
   "UAL1242": {
@@ -196,7 +220,8 @@
     "details": {
       "origin": "MHLM",
       "destination": "KIAH",
-      "aircraft_type": "B38M"
+      "aircraft_type": "B38M",
+      "delay_minutes": null
     }
   },
   "UAL619": {
@@ -204,7 +229,8 @@
     "details": {
       "origin": "KSFO",
       "destination": "KIAH",
-      "aircraft_type": "B39M"
+      "aircraft_type": "B39M",
+      "delay_minutes": null
     }
   },
   "ASH3986": {
@@ -212,7 +238,8 @@
     "details": {
       "origin": "KABQ",
       "destination": "KIAH",
-      "aircraft_type": "E75L"
+      "aircraft_type": "E75L",
+      "delay_minutes": null
     }
   },
   "UAL1455": {
@@ -220,7 +247,8 @@
     "details": {
       "origin": "MYNN",
       "destination": "KIAH",
-      "aircraft_type": "B738"
+      "aircraft_type": "B738",
+      "delay_minutes": null
     }
   },
   "UAL521": {
@@ -228,7 +256,8 @@
     "details": {
       "origin": "KATL",
       "destination": "KIAH",
-      "aircraft_type": "B737"
+      "aircraft_type": "B737",
+      "delay_minutes": null
     }
   },
   "ASH6185": {
@@ -236,7 +265,44 @@
     "details": {
       "origin": "KSAV",
       "destination": "KIAH",
-      "aircraft_type": "E75L"
+      "aircraft_type": "E75L",
+      "delay_minutes": null
+    }
+  },
+  "UCA3262": {
+    "expires_at": "2026-04-23T16:13:51.232867+00:00",
+    "details": {
+      "origin": "KIAH",
+      "destination": "KROW",
+      "aircraft_type": "E145",
+      "delay_minutes": null
+    }
+  },
+  "UAL1691": {
+    "expires_at": "2026-04-23T16:20:03.018049+00:00",
+    "details": {
+      "origin": "KABQ",
+      "destination": "KIAH",
+      "aircraft_type": "B38M",
+      "delay_minutes": 40
+    }
+  },
+  "LIFE6": {
+    "expires_at": "2026-04-23T16:21:08.520585+00:00",
+    "details": {
+      "origin": "KLBX",
+      "destination": null,
+      "aircraft_type": "EC45",
+      "delay_minutes": null
+    }
+  },
+  "AAL409": {
+    "expires_at": "2026-04-23T16:30:04.067560+00:00",
+    "details": {
+      "origin": "KDFW",
+      "destination": "MRLB",
+      "aircraft_type": "B738",
+      "delay_minutes": 11
     }
   }
 }
