@@ -311,9 +311,10 @@ class FlightTracker:
         if not self.enable_airportdb_lookup or self.airportdb_client is None:
             return False
         
-        # If we have no details at all, we should try to look them up/create them
-        if flight_details is None:
-            return True
+        # Without FlightAware, we cannot discover airport codes for new callsigns.
+        # We only need to call AirportDB if we already have codes that need names.
+        if not flight_details:
+            return False
 
         # 1. Check if the values actually look like 4-character ICAO codes that need enrichment.
         # This prevents redundant calls if the data is already a label or empty.
